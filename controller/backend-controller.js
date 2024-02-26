@@ -47,50 +47,114 @@ const Register_TeaEstateOwners = (req, res) => {
         })
 }
 
-const Check_Emails = (req, res) => {
-    connection.query('SELECT * FROM teaestateowner_details WHERE Email=?', [req.body.Email],
 
-        (err, result) => {
-            //console.log(req.body.Email);
+const Check_Emails = (req, res) => {
+    const OTP = Math.floor(1000 + Math.random() * 9000);
+    if (req.body.sub === "TeaEstateOwner") {
+        console.log(req.body.sub);
+        console.log(req.body.Email);
+        connection.query('SELECT * FROM teaestateowner_details WHERE Email=?', [req.body.Email], (err, result) => {
             if (err) {
                 console.error('Error:', err);
                 res.status(500).send({ message: 'Internal Server Error' });
             } else {
                 if (result.length > 0) {
-                    res.status(200).send(result);
-
-                    var transporter = nodemailer.createTransport({
-                        service: 'gmail',
-                        auth: {
-                            user: 'chamoth.20221293@iit.ac.lk',
-                            pass: 'vtyk cvqv kycg yfxz'
-                        }
-                    });
-
-                    var mailOptions = {
-                        from: 'chamoth.20221293@iit.ac.lk',
-                        to: req.body.Email,
-                        subject: 'TeaSage Password change OTP..',
-                        text: 'Your OTP is: 1234'
-                    };
-
-                    transporter.sendMail(mailOptions, function (error, info) {
-                        if (error) {
-                            console.log(error);
-                        } else {
-                            console.log('Email sent: ' + info.response);
-                        }
-                    });
-
-
+                    sendOTP(req.body.Email, OTP, res);
                 } else {
-                    res.status(404).send({ message: 'Email not found in the database' });
+                    res.status(404).send({ message: 'Email does not exist, Try again!' });
                 }
             }
         });
+    } else {
+        console.log("teaTransporter");
+        connection.query('SELECT * FROM teaeTransporters_details WHERE Email=?', [req.body.Email], (err, result) => {
+            if (err) {
+                console.error('Error:', err);
+                res.status(500).send({ message: 'Internal Server Error' });
+            } else {
+                if (result.length > 0) {
+                    sendOTP(req.body.Email, OTP, res);
+                } else {
+                    res.status(404).send({ message: 'Email does not exist, Try again!' });
+                }
+            }
+        });
+    }
+};
+
+const sendOTP = (email, OTP, res) => {
+    var transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: 'chamoth.20221293@iit.ac.lk',
+            pass: 'vtyk cvqv kycg yfxz'
+        }
+    });
+
+    var mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'TeaSage Password change OTP..',
+        text: `Your OTP is: ${OTP}`
+    };
+
+    transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+            console.log(error);
+            res.status(500).send({ message: 'Error sending OTP' });
+        } else {
+            console.log('Email sent: ' + info.response);
+            res.status(200).send({ message: 'OTP sent successfully', OTP: `${OTP}` });
+        }
+    });
+};
+
+
+
+const Update_TeaEstateOwners = (req, res) => {
+    const { newPassword, conPassword, Email, Validation } = req.body;
+    console.log(Validation);
+    // Assuming your table name is `teaestateowner_details`
+    if (Validation === "TeaEstateOwner") {
+
+        connection.query(
+
+            'UPDATE teaestateowner_details SET password=?, confirm_password=? WHERE Email=?',
+            [newPassword, conPassword, Email],
+
+            (err, result) => {
+                if (err) {
+                    console.error("Error updating record: ", err);
+                    res.status(500).send({ message: "Error updating record" });
+                } else {
+                    console.log("Record updated successfully");
+                    res.send(result); // You might want to adjust the response based on your requirements
+                }
+            }
+        );
+
+    } else {
+
+        connection.query(
+
+            'UPDATE teaTransporter_details SET password=?, confirm_password=? WHERE Email=?',
+            [newPassword, conPassword, Email],
+
+            (err, result) => {
+                if (err) {
+                    console.error("Error updating record: ", err);
+                    res.status(500).send({ message: "Error updating record" });
+                } else {
+                    console.log("Record updated successfully");
+                    res.send(result); // You might want to adjust the response based on your requirements
+                }
+            }
+        );
+    }
+
 };
 
 
 
 
-module.exports = { TeaEstateOwner_Validation, TeaTransporter_Validation, Register_TeaEstateOwners, Check_Emails }
+module.exports = { TeaEstateOwner_Validation, TeaTransporter_Validation, Register_TeaEstateOwners, Check_Emails, Update_TeaEstateOwners }

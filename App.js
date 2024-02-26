@@ -17,3 +17,4 @@ app.use('/api/sdgp_database', teaestateowner_details)
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })
+
