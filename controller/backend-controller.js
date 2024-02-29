@@ -154,7 +154,14 @@ const Update_TeaEstateOwners = (req, res) => {
 
 };
 
+const GetTeastateOwnerDetails = (req, res) => {
+    connection.query('SELECT * FROM teaestateowner_details', (err, rows) => {
+        if (err) throw err
+        res.send(rows)
+    })
+}
 
 
 
-module.exports = { TeaEstateOwner_Validation, TeaTransporter_Validation, Register_TeaEstateOwners, Check_Emails, Update_TeaEstateOwners }
+
+module.exports = { TeaEstateOwner_Validation, TeaTransporter_Validation, Register_TeaEstateOwners, Check_Emails, Update_TeaEstateOwners, GetTeastateOwnerDetails }
