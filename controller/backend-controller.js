@@ -5,7 +5,7 @@ var nodemailer = require('nodemailer');
 
 const TeaEstateOwner_Validation = (req, res) => {
 
-    connection.query('SELECT * FROM teaestateowner_details WHERE username=? AND password=?', [req.body.username, req.body.password],
+    connection.query('SELECT * FROM teaestateowner_details WHERE Email=? AND password=SHA2(?,256)', [req.body.Email, req.body.password],
         (err, result) => {
             if (err) {
                 req.setEncoding({ err: err });
@@ -21,7 +21,7 @@ const TeaEstateOwner_Validation = (req, res) => {
 
 const TeaTransporter_Validation = (req, res) => {
 
-    connection.query('SELECT * FROM teaestateowner_details WHERE username=? AND password=?', [req.body.username, req.body.password],
+    connection.query('SELECT * FROM drivers_details WHERE Email=? AND password=SHA2(?,256)', [req.body.Email, req.body.password],
         (err, result) => {
             if (err) {
                 req.setEncoding({ err: err });
@@ -35,16 +35,19 @@ const TeaTransporter_Validation = (req, res) => {
         })
 }
 
-const Register_TeaEstateOwners = (req, res) => {
+const Dispatch_TeaWeight = (req, res) => {
 
-    connection.query('INSERT INTO teaestateowner_details VALUES(?,?,?,?)', [req.body.username, req.body.TeaEstateId, req.body.password, req.body.confirm_password],
+    connection.query(
+        'INSERT INTO eastate_records (eatate_ID, Dispatch_Weight) VALUES (?, ?)', [req.body.estate_ID, req.body.Dispatch_Weight],
         (err, result) => {
-            if (result) {
-                res.send(result);
+            if (err) {
+                console.error('Error occurred during insertion:', err);
+                return res.status(500).send({ message: "Error occurred during insertion." });
             } else {
-                res.send({ message: "Enter correct details" })
+                return res.status(200).send({ message: "Data inserted successfully." });
             }
-        })
+        }
+    );
 }
 
 
@@ -67,7 +70,7 @@ const Check_Emails = (req, res) => {
         });
     } else {
         console.log("teaTransporter");
-        connection.query('SELECT * FROM teaeTransporters_details WHERE Email=?', [req.body.Email], (err, result) => {
+        connection.query('SELECT * FROM drivers_details WHERE Email=?', [req.body.Email], (err, result) => {
             if (err) {
                 console.error('Error:', err);
                 res.status(500).send({ message: 'Internal Server Error' });
@@ -94,8 +97,14 @@ const sendOTP = (email, OTP, res) => {
     var mailOptions = {
         from: process.env.EMAIL_USER,
         to: email,
-        subject: 'TeaSage Password change OTP..',
-        text: `Your OTP is: ${OTP}`
+        subject: 'TeaSage Password Change OTP',
+        text: `Dear EstateOwner,
+        \r\n\r\nYou have requested to change your password for your TeaSage account. Please find your One-Time Password (OTP) below:
+        \r\n\r\nOTP: ${OTP}\r\n\r\n
+        This OTP is valid for a limited time and can only be used once.
+         Do not share this OTP with anyone. If you did not request this change, 
+         please ignore this email.\r\n\r\nThank you for using TeaSage.
+         \r\n\r\nBest regards,\r\nTeaSage Team`
     };
 
     transporter.sendMail(mailOptions, function (error, info) {
@@ -119,7 +128,7 @@ const Update_TeaEstateOwners = (req, res) => {
 
         connection.query(
 
-            'UPDATE teaestateowner_details SET password=?, confirm_password=? WHERE Email=?',
+            'UPDATE teaestateowner_details SET password=?, Confirm_password=? WHERE Email=?',
             [newPassword, conPassword, Email],
 
             (err, result) => {
@@ -137,7 +146,7 @@ const Update_TeaEstateOwners = (req, res) => {
 
         connection.query(
 
-            'UPDATE teaTransporter_details SET password=?, confirm_password=? WHERE Email=?',
+            'UPDATE drivers_details SET password=?, Confirm_password=? WHERE Email=?',
             [newPassword, conPassword, Email],
 
             (err, result) => {
@@ -164,4 +173,4 @@ const GetTeastateOwnerDetails = (req, res) => {
 
 
 
-module.exports = { TeaEstateOwner_Validation, TeaTransporter_Validation, Register_TeaEstateOwners, Check_Emails, Update_TeaEstateOwners, GetTeastateOwnerDetails }
+module.exports = { TeaEstateOwner_Validation, TeaTransporter_Validation, Dispatch_TeaWeight, Check_Emails, Update_TeaEstateOwners, GetTeastateOwnerDetails }
