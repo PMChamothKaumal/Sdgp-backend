@@ -89,8 +89,8 @@ const sendOTP = (email, OTP, res) => {
     var transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-            user: 'chamoth.20221293@iit.ac.lk',
-            pass: 'vtyk cvqv kycg yfxz'
+            user: 'teasageofficial@gmail.com',
+            pass: 'zshy aifl kepj llqm'
         }
     });
 
@@ -128,7 +128,7 @@ const Update_TeaEstateOwners = (req, res) => {
 
         connection.query(
 
-            'UPDATE teaestateowner_details SET password=?, Confirm_password=? WHERE Email=?',
+            'UPDATE teaestateowner_details SET password=SHA2(?,256), Confirm_password=? WHERE Email=?',
             [newPassword, conPassword, Email],
 
             (err, result) => {
@@ -146,7 +146,7 @@ const Update_TeaEstateOwners = (req, res) => {
 
         connection.query(
 
-            'UPDATE drivers_details SET password=?, Confirm_password=? WHERE Email=?',
+            'UPDATE drivers_details SET password=SHA2(?,256), Confirm_password=? WHERE Email=?',
             [newPassword, conPassword, Email],
 
             (err, result) => {
