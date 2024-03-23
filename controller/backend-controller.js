@@ -2,6 +2,8 @@
 const connection = require('../db/db-connection');
 const mime = require('mime');
 var nodemailer = require('nodemailer');
+const moment = require('moment-timezone');
+
 
 const TeaEstateOwner_Validation = (req, res) => {
 
@@ -36,19 +38,38 @@ const TeaTransporter_Validation = (req, res) => {
 }
 
 const Dispatch_TeaWeight = (req, res) => {
-
+    // Check if data already exists for the provided Tea_Estate_Id and current date
     connection.query(
-        'INSERT INTO eastate_records (eatate_ID, Dispatch_Weight) VALUES (?, ?)', [req.body.estate_ID, req.body.Dispatch_Weight],
-        (err, result) => {
+        'SELECT * FROM dispatch_weight_records WHERE Tea_Estate_Id = ? AND Date_Column = CURDATE()',
+        [req.body.estate_ID],
+        (err, rows) => {
             if (err) {
-                console.error('Error occurred during insertion:', err);
-                return res.status(500).send({ message: "Error occurred during insertion." });
-            } else {
-                return res.status(200).send({ message: "Data inserted successfully." });
+                console.error('Error occurred during selection:', err);
+                return res.status(500).send({ message: "Error occurred during data selection." });
             }
+
+            // If there are rows returned, it means data already exists for the provided Tea_Estate_Id and current date
+            if (rows.length > 0) {
+                return res.status(400).send({ message: "Data already stored for the provided Tea Estate ID on the current date." });
+            }
+
+            // If no rows returned, proceed with the insertion
+            connection.query(
+                'INSERT INTO dispatch_weight_records (Tea_Estate_Id, Dispatch_weight, Date_Column) VALUES (?, ?, CURDATE())',
+                [req.body.estate_ID, req.body.Dispatch_Weight],
+                (err, result) => {
+                    if (err) {
+                        console.error('Error occurred during insertion:', err);
+                        return res.status(500).send({ message: "Error occurred during insertion." });
+                    } else {
+                        return res.status(200).send({ message: "Data inserted successfully." });
+                    }
+                }
+            );
         }
     );
 }
+
 
 
 const Check_Emails = (req, res) => {
@@ -170,7 +191,74 @@ const GetTeastateOwnerDetails = (req, res) => {
     })
 }
 
+const GetNotifications = (req, res) => {
+    connection.query('SELECT * FROM owner_notifications', (err, rows) => {
+        if (err) throw err
+        res.send(rows)
+    })
+}
+
+
+const NotfyTransporter = (req, res) => {
+    // Get the current date in UTC+5:30 timezone
+    const currentDateTime = moment().tz('Asia/Colombo').format('YYYY-MM-DD');
+
+    // Check if data already exists for the provided Tea_Estate_Id and current date
+    connection.query(
+        'SELECT * FROM owner_notifications WHERE tea_state_id = ? AND Date_Column = ?',
+        [req.body.tea_state_id, currentDateTime],
+        (err, rows) => {
+            if (err) {
+                console.error('Error occurred during selection:', err);
+                return res.status(500).send({ message: "Error occurred during data selection." });
+            }
+
+            // If there are rows returned, it means data already exists for the provided Tea_Estate_Id and current date
+            if (rows.length > 0) {
+                return res.status(400).send({ message: "Already Notified the Tea Transporter!" });
+            }
+
+            // If no rows returned, proceed with the insertion
+            connection.query(
+                'INSERT INTO owner_notifications (tea_state_id, notification, Date_Column) VALUES (?, ?, ?)',
+                [req.body.tea_state_id, req.body.notification, currentDateTime],
+                (err, result) => {
+                    if (err) {
+                        console.error('Error occurred during insertion:', err);
+                        return res.status(500).send({ message: "Error occurred during insertion." });
+                    } else {
+                        return res.status(200).send({ message: "Successfully Notified the Transporter" });
+                    }
+                }
+            );
+        }
+    );
+}
+
+
+const WeeklyReport = (req, res) => {
+    connection.query(
+        'SELECT * FROM eastate_records WHERE Email = ? ORDER BY ToDate DESC LIMIT 1',
+        [req.body.Email],
+        (err, rows) => {
+            if (err) throw err
+            res.send(rows)
+        }
+    );
+};
+
+const PastData = (req, res) => {
+    connection.query(
+        'SELECT income, ToDate, Dispatch_Weight, deduct_Weight  FROM eastate_records WHERE Email = ?',
+        [req.body.Email],
+        (err, rows) => {
+            if (err) throw err
+            res.send(rows)
+        }
+    );
+};
 
 
 
-module.exports = { TeaEstateOwner_Validation, TeaTransporter_Validation, Dispatch_TeaWeight, Check_Emails, Update_TeaEstateOwners, GetTeastateOwnerDetails }
+
+module.exports = { TeaEstateOwner_Validation, PastData, TeaTransporter_Validation, Dispatch_TeaWeight, Check_Emails, Update_TeaEstateOwners, GetTeastateOwnerDetails, NotfyTransporter, GetNotifications, WeeklyReport }
