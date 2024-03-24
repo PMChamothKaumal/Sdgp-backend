@@ -236,6 +236,24 @@ const NotfyTransporter = (req, res) => {
 }
 
 
+const Contact_Factory = (req, res) => {
+    const currentDateTime = moment().tz('Asia/Colombo').format('YYYY-MM-DD');
+
+    connection.query(
+        'INSERT INTO ownerproblems (Email, Problem, Date) VALUES (?, ?, ?)',
+        [req.body.Email, req.body.Problem, currentDateTime],
+        (err, result) => {
+            if (err) {
+                console.error('Error occurred during insertion:', err);
+                return res.status(500).send({ message: "Error occurred during insertion." });
+            } else {
+                return res.status(200).send({ message: "Successfully Notified the Tea Factory" });
+            }
+        }
+    );
+}
+
+
 const WeeklyReport = (req, res) => {
     connection.query(
         'SELECT * FROM eastate_records WHERE Email = ? ORDER BY ToDate DESC LIMIT 1',
@@ -261,4 +279,4 @@ const PastData = (req, res) => {
 
 
 
-module.exports = { TeaEstateOwner_Validation, PastData, TeaTransporter_Validation, Dispatch_TeaWeight, Check_Emails, Update_TeaEstateOwners, GetTeastateOwnerDetails, NotfyTransporter, GetNotifications, WeeklyReport }
+module.exports = { TeaEstateOwner_Validation, PastData, TeaTransporter_Validation, Dispatch_TeaWeight, Check_Emails, Update_TeaEstateOwners, GetTeastateOwnerDetails, NotfyTransporter, GetNotifications, WeeklyReport, Contact_Factory }
